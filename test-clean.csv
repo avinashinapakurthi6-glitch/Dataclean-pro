@@ -1,0 +1,4 @@
+id,name,status,created_date,records_processed,quality_score
+1,customer database clean,completed,2026-05-12,5000,92
+2,product inventory validation,completed,2026-05-11,3200,88
+3,email deduplication,completed,2026-05-10,8500,95

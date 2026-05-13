@@ -1,0 +1,106 @@
+import React from 'react';
+import { base44 } from '@/api/base44Client';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
+import { FileSpreadsheet, FileText, Clock } from 'lucide-react';
+import { format } from 'date-fns';
+import { motion } from 'framer-motion';
+
+import QualityScoreCard from '@/components/dashboard/QualityScoreCard';
+
+export default function History() {
+  const { data: jobs, isLoading } = useQuery({
+    queryKey: ['cleaning-jobs'],
+    queryFn: () => base44.entities.CleaningJob.list('-created_date', 50),
+    initialData: [],
+  });
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Cleaning History</h1>
+        <p className="text-sm text-muted-foreground mt-1">Past data cleaning jobs and their results</p>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-3">
+          {Array(3).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-24 w-full rounded-xl" />
+          ))}
+        </div>
+      ) : jobs.length === 0 ? (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Clock className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="text-muted-foreground">No cleaning jobs yet. Upload a file to get started.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {jobs.map((job, i) => (
+            <motion.div
+              key={job.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+            >
+              <Card className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-4">
+                    {/* File info */}
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {job.file_type === 'csv' ? (
+                          <FileText className="w-5 h-5 text-primary" />
+                        ) : (
+                          <FileSpreadsheet className="w-5 h-5 text-primary" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-foreground truncate">{job.file_name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <Badge variant="secondary" className="text-[10px] uppercase">{job.file_type}</Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {job.created_date ? format(new Date(job.created_date), 'MMM d, yyyy HH:mm') : ''}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    {job.summary && (
+                      <div className="flex items-center gap-6 flex-wrap">
+                        <div className="text-center">
+                          <p className="text-xl font-bold">{job.summary.rows_before?.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">Rows In</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xl font-bold">{job.summary.rows_after?.toLocaleString()}</p>
+                          <p className="text-[10px] text-muted-foreground">Rows Out</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xl font-bold text-destructive">{job.summary.duplicates_removed}</p>
+                          <p className="text-[10px] text-muted-foreground">Dupes</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xl font-bold text-amber-500">{job.summary.nulls_before}</p>
+                          <p className="text-[10px] text-muted-foreground">Nulls Found</p>
+                        </div>
+                        <div className="scale-75 -my-2">
+                          <QualityScoreCard score={job.summary.quality_score || 0} animate={false} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
