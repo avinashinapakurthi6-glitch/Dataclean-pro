@@ -7,8 +7,8 @@ import { AuthProvider, useAuth } from '@/lib/authcontext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 
 import AppLayout from '@/components/layout/AppLayout';
-import Dashboard from '@/pages/Dashboard';
-import History from '@/pages/History';
+import Dashboard from '@/pages/dashboard';
+import History from '@/pages/history';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
